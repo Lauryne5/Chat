@@ -25,7 +25,7 @@ int main(void) {
         printf(("Failed to create socket"));
         return -1;
     }
-    if (bind(server, (struct sockaddr*)&address, 0) != 0) {
+    if (bind(server, (struct sockaddr*)&address, sizeof(address)) != 0) {
         printf("Failed to bind\n");
         return -1;
     }
@@ -163,7 +163,7 @@ unsigned long handleNewClients(void *) {
     int err = -1;
 
     while (1){
-        if (temporaryClient = accept(server, temporaryClientIp, NULL) != INVALID_SOCKET) {
+        if ((temporaryClient = accept(server, temporaryClientIp, NULL)) == INVALID_SOCKET) {
             err = WSAGetLastError();
             if (err == WSAENETDOWN || err == WSAENOBUFS)
                 exit(1);
