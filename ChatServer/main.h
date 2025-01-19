@@ -41,5 +41,6 @@ void put(Node*, char);
 void emptyList(Node*);
 char* getInput(Node*, int);
 int splitInput(char*, int, char**, char**);
+void readUserInput();
 
 #endif //MAIN_H
