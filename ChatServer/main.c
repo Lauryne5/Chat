@@ -48,7 +48,7 @@ int addClient(SOCKET client, struct sockaddr_in* clientaddress) {
     for (int i = 0; i < MAX_CHATROOM_SIZE; i++) {
         if (clients[i] != NULL) {
             if (clients[i]->addressip->sin_addr.s_addr == clientaddress->sin_addr.s_addr) {
-                printf("This client already exists\n");
+                printf("This client already exists\n"); //TODO refermer le socket client proprement
                 return -2;
             }
         }
@@ -104,14 +104,22 @@ int receiveStringFromClient(char** array, SOCKET client) {
     int receivemax = 0;
     int receivesize = 0;
 
-    while((receivesize = recv(client, buffer, strlen(buffer), 0)) > 0){
+    while(1){
+        receivesize = recv(client, buffer, buffersize, 0);
+        receivemax += receivesize;
+        if (receivesize <= 0) {
+            printf("Failed to receive data");
+        }
         int index = buffersize*(i)-i;
         if (index <= -1)
             index = 0;
         memcpy(*array+index, buffer, buffersize);
         i++;
+        if (receivesize < buffersize) {
+            break;
+        }
         *array = realloc(*array, (buffersize+31*(i))*sizeof(char));
-        receivemax += receivesize;
+
     }
     *array[receivemax] = '\0';
     printf("%s", *array);
@@ -124,9 +132,11 @@ int sendToEveryone(int index, char* message) {
         if (index == i) {
             continue;
         }
-        if (send(clients[i]->s, message, strlen(message), 0) == SOCKET_ERROR) {
-            printf("Sending data failed\n");
-            return -1;
+        if (clients[i] != NULL) {
+            if (send(clients[i]->s, message, strlen(message), 0) == SOCKET_ERROR) {
+                printf("Sending data failed\n");
+                return -1;
+            }
         }
 
     }
@@ -142,7 +152,6 @@ void removeClient(int index) {
     clients[index] = NULL;
 
 }
-
 int addThreadToList(HANDLE thread) {
     for (int i =0; i < MAX_CHATROOM_SIZE; i++) {
         if (threadlist[i] == NULL) {
@@ -157,13 +166,14 @@ unsigned long handleNewClients(void *) {
 
     SOCKET temporaryClient;
     HANDLE clientThread;
-    struct sockaddr* temporaryClientIp = NULL;
+    struct sockaddr temporaryClientIp;
+    int sockaddr_size = sizeof(struct sockaddr);
     char* connectionResponse = "Connecte a la chatroom";
     int index = -1;
     int err = -1;
 
     while (1){
-        if ((temporaryClient = accept(server, temporaryClientIp, NULL)) == INVALID_SOCKET) {
+        if ((temporaryClient = accept(server, &temporaryClientIp, &sockaddr_size)) == INVALID_SOCKET) {
             err = WSAGetLastError();
             if (err == WSAENETDOWN || err == WSAENOBUFS)
                 exit(1);
@@ -171,7 +181,7 @@ unsigned long handleNewClients(void *) {
         }
 
         printf("Connection accepted\n");
-        if ((index = addClient(temporaryClient,  (struct sockaddr_in*)temporaryClientIp)) < 0){
+        if ((index = addClient(temporaryClient,  (struct sockaddr_in*)&temporaryClientIp)) < 0){
             printf("Client could not be added\n");
             closesocket(temporaryClient);
             continue;

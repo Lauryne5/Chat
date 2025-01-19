@@ -99,11 +99,11 @@ unsigned long sendInput(SOCKET arg) {
             i++;
             array = realloc(array, (size+31*(i))*sizeof(char));
         }
-        free(array);
         if (send(arg, array, strlen(array), 0) == SOCKET_ERROR) {
             printf("Cannot send message\n");
             //TODO
         }
+        free(array);
     }
     return 0;
 }
