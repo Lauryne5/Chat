@@ -3,18 +3,20 @@
 #include <windows.h>
 #include "main.h"
 
-int main(void) {
+int main(int argc, char* argv[]) {
     setbuf(stdout, 0);
     WSADATA wsaData;
     SOCKET client;
 
     HANDLE rcvThread;
 
+    char* ip = argv[1];
+
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(3000);
-    address.sin_addr.s_addr = inet_addr("127.0.0.1"); //TODO
-
+    //address.sin_addr.s_addr = inet_addr("127.0.0.1"); //TODO
+    address.sin_addr.s_addr = inet_addr(ip);
 
 
     if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {

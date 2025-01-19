@@ -5,7 +5,7 @@ Client* clients[MAX_CHATROOM_SIZE] = {NULL};
 HANDLE threadlist[MAX_CHATROOM_SIZE] = {NULL};
 SOCKET server;
 
-int main(void) {
+int main(int argc, char* argv[]) {
     setbuf(stdout, 0);
     WSADATA wsaddata;
     HANDLE serverThread;
