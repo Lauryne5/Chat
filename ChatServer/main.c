@@ -13,7 +13,7 @@ int main(void) {
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(3000);
-    address.sin_addr.s_addr = inet_addr("127.0.0.1");
+    address.sin_addr.s_addr = inet_addr("127.0.0.1"); //TODO
 
 
 
@@ -38,7 +38,7 @@ int main(void) {
         printf("Couldn't start server thread\n");
         //TODO
     }
-
+    readUserInput();
     return 0;
 }
 
