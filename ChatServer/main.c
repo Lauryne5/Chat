@@ -6,7 +6,7 @@ HANDLE threadlist[MAX_CHATROOM_SIZE] = {NULL};
 SOCKET server;
 
 int main(void) {
-
+    setbuf(stdout, 0);
     WSADATA wsaddata;
     HANDLE serverThread;
 
@@ -104,7 +104,7 @@ int receiveStringFromClient(char** array, SOCKET client) {
     int receivemax = 0;
     int receivesize = 0;
 
-    while((receivesize = recv(client, buffer, strlen(buffer), 0)) <= 0){
+    while((receivesize = recv(client, buffer, strlen(buffer), 0)) > 0){
         int index = buffersize*(i)-i;
         if (index <= -1)
             index = 0;
@@ -114,7 +114,7 @@ int receiveStringFromClient(char** array, SOCKET client) {
         receivemax += receivesize;
     }
     *array[receivemax] = '\0';
-
+    printf("%s", *array);
     return receivesize;
 }
 
@@ -170,13 +170,16 @@ unsigned long handleNewClients(void *) {
             continue;
         }
 
-        puts("Connection accepted\n");
+        printf("Connection accepted\n");
         if ((index = addClient(temporaryClient,  (struct sockaddr_in*)temporaryClientIp)) < 0){
             printf("Client could not be added\n");
             closesocket(temporaryClient);
             continue;
         }
-        send(temporaryClient, connectionResponse, strlen(connectionResponse),0);
+        if (send(temporaryClient, connectionResponse, strlen(connectionResponse),0) == SOCKET_ERROR) {
+            printf("Failed to send welcome message");
+            return -1;
+        }
 
         if ((clientThread = CreateThread(NULL, 0, handleClient, &index, 0, NULL)) == NULL) {
             printf("Failed to create client thread\n");

@@ -1,17 +1,14 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
-
-unsigned long receive(void*);
-unsigned long sendInput(SOCKET);
+#include "main.h"
 
 int main(void) {
-
+    setbuf(stdout, 0);
     WSADATA wsaData;
     SOCKET client;
 
     HANDLE rcvThread;
-    HANDLE sendThread;
 
     struct sockaddr_in address;
     address.sin_family = AF_INET;
@@ -41,6 +38,9 @@ int main(void) {
     }
     sendInput(client);
 
+    closesocket(client);
+    WSACleanup();
+
     return 0;
 }
 
@@ -57,17 +57,21 @@ unsigned long receive(void* arg) {
         receivemax = 0;
         i = 0;
 
-        while ((receivesize = recv(*(SOCKET*)arg, buffer, strlen(buffer), 0)) <= 0) {
+        while ((receivesize = recv(*(SOCKET*)arg, buffer, buffersize, 0)) > 0) {
             int index = buffersize*(i)-i;
+            receivemax += receivesize;
             if (index <= -1)
                 index = 0;
             memcpy(array+index, buffer, buffersize);
             i++;
+            if (receivesize < buffersize) {
+                break;
+            }
             array = realloc(array, (buffersize+31*(i))*sizeof(char));
-            receivemax+= receivesize;
+
         }
         array[receivemax] = '\0';
-        printf("%s", array);
+        printf("%s\n", array);
         free(array);
     }
 
