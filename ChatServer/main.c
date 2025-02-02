@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_port = htons(3000);
-    address.sin_addr.s_addr = inet_addr("127.0.0.1"); //TODO
+    address.sin_addr.s_addr = inet_addr("192.168.1.12"); //TODO
 
 
 
@@ -47,10 +47,10 @@ int addClient(SOCKET client, struct sockaddr_in* clientaddress) {
     int index = -1;
     for (int i = 0; i < MAX_CHATROOM_SIZE; i++) {
         if (clients[i] != NULL) {
-            if (clients[i]->addressip->sin_addr.s_addr == clientaddress->sin_addr.s_addr) {
-                printf("This client already exists\n"); //TODO refermer le socket client proprement
-                return -2;
-            }
+            // if (clients[i]->addressip->sin_addr.s_addr == clientaddress->sin_addr.s_addr) {
+            //     printf("This client already exists\n"); //TODO refermer le socket client proprement
+            //     return -2;
+            // }
         }
         else {
             if (index == -1)
@@ -87,6 +87,7 @@ unsigned long handleClient(void* i) {
             removeClient(index);
             return 1;
         }
+        printf("%s\n", message);
         if (sendToEveryone(index, message) != 0) {
             printf("Couldn't send to everyone\n");
             //TODO
@@ -110,19 +111,23 @@ int receiveStringFromClient(char** array, SOCKET client) {
         if (receivesize <= 0) {
             printf("Failed to receive data");
         }
-        int index = buffersize*(i)-i;
+        int index = buffersize*(i);
         if (index <= -1)
             index = 0;
-        memcpy(*array+index, buffer, buffersize);
+        memcpy(*array+index, buffer, receivesize);
         i++;
         if (receivesize < buffersize) {
             break;
         }
+        if (buffer[buffersize-1] == '\0') {
+            break;
+        }
+
         *array = realloc(*array, (buffersize+31*(i))*sizeof(char));
 
     }
-    *array[receivemax] = '\0';
-    printf("%s", *array);
+
+    (*array)[receivemax] = '\0';
     return receivesize;
 }
 
@@ -133,7 +138,7 @@ int sendToEveryone(int index, char* message) {
             continue;
         }
         if (clients[i] != NULL) {
-            if (send(clients[i]->s, message, strlen(message), 0) == SOCKET_ERROR) {
+            if (send(clients[i]->s, message, strlen(message)+1, 0) == SOCKET_ERROR) {
                 printf("Sending data failed\n");
                 return -1;
             }
@@ -228,7 +233,7 @@ void readUserInput() {
 
         if (input == NULL)
             continue;
-        splitInput(input, sizelist, &command, &parameters);
+        splitInput(input, sizelist, &command, &parameters); //TODO SEGFault
         executeCommand(command, parameters);
 
         emptyList(head);

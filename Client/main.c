@@ -60,13 +60,16 @@ unsigned long receive(void* arg) {
         i = 0;
 
         while ((receivesize = recv(*(SOCKET*)arg, buffer, buffersize, 0)) > 0) {
-            int index = buffersize*(i)-i;
+            int index = buffersize*(i);
             receivemax += receivesize;
             if (index <= -1)
                 index = 0;
             memcpy(array+index, buffer, buffersize);
             i++;
             if (receivesize < buffersize) {
+                break;
+            }
+            if (buffer[buffersize-1] == '\0') {
                 break;
             }
             array = realloc(array, (buffersize+31*(i))*sizeof(char));
@@ -101,7 +104,7 @@ unsigned long sendInput(SOCKET arg) {
             i++;
             array = realloc(array, (size+31*(i))*sizeof(char));
         }
-        if (send(arg, array, strlen(array), 0) == SOCKET_ERROR) {
+        if (send(arg, array, strlen(array)+1, 0) == SOCKET_ERROR) {
             printf("Cannot send message\n");
             //TODO
         }
