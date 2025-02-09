@@ -10,6 +10,9 @@ int main(int argc, char* argv[]) {
 
     HANDLE rcvThread;
 
+    char pseudo[32];
+    int pseudo_size;
+
     char* ip = argv[1];
 
     struct sockaddr_in address;
@@ -18,6 +21,10 @@ int main(int argc, char* argv[]) {
     //address.sin_addr.s_addr = inet_addr("127.0.0.1"); //TODO
     address.sin_addr.s_addr = inet_addr(ip);
 
+    if ((pseudo_size = retrievePseudo(pseudo)) <= 0) {
+        printf("Pseudo is empty");
+        return -1;
+    }
 
     if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         printf("WSAStartup initialization failed\n");
@@ -34,15 +41,49 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    if (sendPseudo(client, pseudo, pseudo_size) != 0) {
+        printf("Failed to send pseudo");
+        closeConnection(client);
+        return -1;
+    }
+
     if ((rcvThread = CreateThread(NULL, 0, receive, &client, 0, NULL)) == NULL){
         printf("Failed to create receive thread\n");
+        closeConnection(client);
         return -1;
     }
     sendInput(client);
 
-    closesocket(client);
+    closeConnection(client);
     WSACleanup();
 
+    return 0;
+}
+
+void closeConnection(SOCKET s) {
+    shutdown(s, SD_BOTH);
+    closesocket(s);
+}
+
+int retrievePseudo(char* pseudo) {
+
+    printf("Enter your pseudo:\n");
+    fgets(pseudo,31, stdin);
+    fflush(stdin);
+    char *end = strchr(pseudo, '\n');
+    if (end == NULL)
+        return -1;
+
+    end[0] = '\0';
+    return (int)(end - pseudo);
+}
+
+int sendPseudo(SOCKET client, char* pseudo, int pseudo_size) {
+
+    if (send(client, pseudo, pseudo_size,0) == SOCKET_ERROR) {
+        printf("Cannot send message\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -75,12 +116,16 @@ unsigned long receive(void* arg) {
             array = realloc(array, (buffersize+31*(i))*sizeof(char));
 
         }
+        if (receivesize <= 0) {
+            printf("Connection closed\n");
+            break;
+        }
         array[receivemax] = '\0';
         printf("%s\n", array);
         free(array);
     }
 
-    return 0;
+    exit(0);
 }
 
 unsigned long sendInput(SOCKET arg) {
@@ -106,7 +151,7 @@ unsigned long sendInput(SOCKET arg) {
         }
         if (send(arg, array, strlen(array)+1, 0) == SOCKET_ERROR) {
             printf("Cannot send message\n");
-            //TODO
+            break;
         }
         free(array);
     }
