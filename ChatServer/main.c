@@ -69,7 +69,6 @@ int addClient(SOCKET client, struct sockaddr_in* clientaddress, char* pseudo) {
     newclient->s = client;
     newclient->addressip = clientaddress;
     newclient->pseudo = pseudo;
-    printf("AddClient: %s\n", newclient->pseudo);
     clients[index] = newclient;
     return index;
 }
@@ -207,7 +206,6 @@ unsigned long handleNewClients(void *) {
             closesocket(temporaryClient);
             continue;
         }
-        printf("HandleNewClients: %s", clients[index]->pseudo);
         if (send(temporaryClient, connectionResponse, strlen(connectionResponse),0) == SOCKET_ERROR) {
             printf("Failed to send welcome message");
             return -1;
@@ -234,7 +232,7 @@ int retrievePseudo(char** message, SOCKET s) {
     }
 
     for (int i = 0; i < receivesize; i++) {
-        if (!(*message[i] == '\0' || (*message[i] >= NUMBER_LOWER_EDGE && *message[i] <= NUMBER_HIGHER_EDGE) || (*message[i] >= UP_CHAR_LOWER_EDGE && *message[i] <= UP_CHAR_HIGHER_EDGE) || (*message[i] >= LO_CHAR_LOWER_EDGE && *message[i] <= LO_CHAR_HIGHER_EDGE))) {
+        if (!((*message)[i] == '\0' || ((*message)[i] >= NUMBER_LOWER_EDGE && (*message)[i] <= NUMBER_HIGHER_EDGE) || ((*message)[i] >= UP_CHAR_LOWER_EDGE && (*message)[i] <= UP_CHAR_HIGHER_EDGE) || ((*message)[i] >= LO_CHAR_LOWER_EDGE && (*message)[i] <= LO_CHAR_HIGHER_EDGE))) {
             printf("Le pseudo ne suit pas les regles\n");
             printf("%c", *message[i]);
             return 1;
